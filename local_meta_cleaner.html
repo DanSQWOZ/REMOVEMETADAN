@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Local Meta Cleaner</title>
+  <style>
+    :root {
+      --bg: #0b1020;
+      --panel: #131a2b;
+      --panel-2: #1b2440;
+      --text: #eef2ff;
+      --muted: #a8b3cf;
+      --accent: #7c9cff;
+      --accent-2: #93c5fd;
+      --danger: #ff7b7b;
+      --ok: #62d394;
+      --border: rgba(255,255,255,.08);
+      --shadow: 0 12px 30px rgba(0,0,0,.35);
+      --radius: 20px;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background:
+        radial-gradient(circle at top right, rgba(124,156,255,.15), transparent 30%),
+        radial-gradient(circle at left bottom, rgba(147,197,253,.12), transparent 28%),
+        var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    .wrap {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 28px 18px 60px;
+    }
+
+    .hero {
+      padding: 26px;
+      background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+      border: 1px solid var(--border);
+      border-radius: 28px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(8px);
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: clamp(28px, 4vw, 46px);
+      line-height: 1.05;
+    }
+
+    p.lead {
+      margin: 0;
+      color: var(--muted);
+      font-size: 16px;
+      line-height: 1.6;
+      max-width: 900px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1.2fr .8fr;
+      gap: 20px;
+      margin-top: 22px;
+    }
+
+    @media (max-width: 900px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+
+    .card {
+      background: linear-gradient(180deg, rgba(255,255,255,.035), rgba(255,255,255,.02));
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 18px;
+    }
+
+    .dropzone {
+      margin-top: 14px;
+      border: 2px dashed rgba(124,156,255,.45);
+      border-radius: 20px;
+      padding: 26px;
+      text-align: center;
+      transition: .2s ease;
+      background: rgba(124,156,255,.05);
+    }
+
+    .dropzone.drag {
+      transform: translateY(-2px);
+      border-color: var(--accent-2);
+      background: rgba(147,197,253,.10);
+    }
+
+    .btns {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    button, .file-label {
+      appearance: none;
+      border: none;
+      border-radius: 14px;
+      padding: 12px 16px;
+      background: var(--accent);
+      color: white;
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 14px;
+      transition: transform .15s ease, opacity .15s ease, background .15s ease;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 46px;
+    }
+
+    button.secondary, .file-label.secondary {
+      background: #27314f;
+      color: var(--text);
+    }
+
+    button.ghost {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+
+    button:disabled {
+      opacity: .5;
+      cursor: not-allowed;
+      transform: none !important;
+    }
+
+    button:hover, .file-label:hover {
+      transform: translateY(-1px);
+    }
+
+    input[type="file"] { display: none; }
+
+    .list {
+      display: grid;
+      gap: 14px;
+      margin-top: 18px;
+    }
+
+    .item {
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      overflow: hidden;
+      background: rgba(255,255,255,.025);
+    }
+
+    .item-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px 16px;
+      background: rgba(255,255,255,.025);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .item-title {
+      font-weight: 700;
+      word-break: break-word;
+    }
+
+    .badge {
+      font-size: 12px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: #263252;
+      color: #dbe7ff;
+      white-space: nowrap;
+      align-self: flex-start;
+    }
+
+    .item-body {
+      display: grid;
+      grid-template-columns: 220px 1fr;
+      gap: 14px;
+      padding: 14px;
+    }
+
+    @media (max-width: 700px) {
+      .item-body { grid-template-columns: 1fr; }
+    }
+
+    .preview {
+      width: 100%;
+      max-height: 220px;
+      border-radius: 14px;
+      overflow: hidden;
+      background: #0a0f1f;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--border);
+    }
+
+    .preview img, .preview video {
+      max-width: 100%;
+      max-height: 220px;
+      display: block;
+    }
+
+    .meta {
+      display: grid;
+      gap: 10px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .meta strong { color: var(--text); }
+
+    .log {
+      margin-top: 14px;
+      background: #0a0f1f;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 12px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 12px;
+      color: #c8d5ff;
+      max-height: 240px;
+      overflow: auto;
+      white-space: pre-wrap;
+    }
+
+    .status-ok { color: var(--ok); font-weight: 700; }
+    .status-warn { color: #ffcc66; font-weight: 700; }
+    .status-bad { color: var(--danger); font-weight: 700; }
+
+    .small {
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .note {
+      margin-top: 14px;
+      padding: 12px 14px;
+      border-radius: 14px;
+      background: rgba(255, 207, 102, .08);
+      border: 1px solid rgba(255, 207, 102, .18);
+      color: #ffe7ac;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .footer {
+      margin-top: 24px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.7;
+    }
+
+    code.inline {
+      background: rgba(255,255,255,.06);
+      padding: 2px 7px;
+      border-radius: 8px;
+      font-size: 12px;
+    }
+
+    .pillrow {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .pill {
+      padding: 7px 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.05);
+      border: 1px solid var(--border);
+      color: #dbe7ff;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <section class="hero">
+      <h1>Очистка лишних метаданных из фото и видео</h1>
+      <p class="lead">
+        Этот локальный HTML-сайт обрабатывает файлы прямо в браузере. Для фото он пересобирает изображение заново через Canvas,
+        что обычно убирает EXIF, GPS, XMP, ICC, комментарии и прочие лишние поля. Для видео он использует FFmpeg WebAssembly и
+        пересобирает контейнер, удаляя метаданные потоков и контейнера настолько глубоко, насколько это возможно в браузере.
+      </p>
+      <div class="pillrow">
+        <div class="pill">Локально в браузере</div>
+        <div class="pill">Без отправки файлов на сервер</div>
+        <div class="pill">Фото: EXIF/GPS/XMP удаляются</div>
+        <div class="pill">Видео: контейнерные метаданные удаляются</div>
+      </div>
+    </section>
+
+    <div class="grid">
+      <section class="card">
+        <h2 style="margin:0 0 8px;">Загрузка файлов</h2>
+        <div class="small">
+          Можно перетащить сюда файлы или выбрать вручную. Поддерживаются изображения и видео.
+        </div>
+
+        <div id="dropzone" class="dropzone">
+          <div style="font-size:18px; font-weight:800; margin-bottom:8px;">Перетащите фото или видео сюда</div>
+          <div class="small">или выберите файлы кнопкой ниже</div>
+          <div class="btns" style="justify-content:center;">
+            <label class="file-label" for="picker">Выбрать файлы</label>
+            <button class="secondary" id="clearBtn" type="button">Очистить список</button>
+          </div>
+          <input id="picker" type="file" multiple accept="image/*,video/*" />
+        </div>
+
+        <div class="btns">
+          <button id="processBtn" type="button">Очистить метаданные</button>
+          <button id="downloadAllBtn" class="secondary" type="button" disabled>Скачать все очищенные</button>
+        </div>
+
+        <div class="note">
+          Для <strong>фото</strong> сайт сохраняет только «пиксели» и базовый формат вывода. Для <strong>видео</strong> сайт
+          пересобирает контейнер и удаляет метаданные контейнера/потоков. Но некоторые особенности исходного кодека, таймингов,
+          цветовых параметров или встроенных служебных данных могут быть неотделимы без перекодирования. Поэтому для видео это
+          максимально строгая очистка, доступная в браузере, но не абсолютная математическая гарантия удаления вообще любого
+          возможного служебного бита во всех форматах.
+        </div>
+
+        <div id="log" class="log">Готово.\n</div>
+      </section>
+
+      <aside class="card">
+        <h2 style="margin:0 0 8px;">Что именно делает сайт</h2>
+        <div class="small">
+          <p><strong>Фото:</strong> изображение декодируется и заново экспортируется. Так метаданные не копируются из исходного файла в новый.</p>
+          <p><strong>Видео:</strong> FFmpeg в браузере запускается локально, файл пересобирается с ключами удаления метаданных. По умолчанию
+          выполняется попытка <strong>без перекодирования</strong> там, где это возможно, чтобы сохранить качество и скорость.</p>
+          <p><strong>Приватность:</strong> файл не уходит на сервер. Всё происходит на вашем устройстве.</p>
+        </div>
+
+        <h3 style="margin:16px 0 8px;">Ограничения</h3>
+        <div class="small">
+          <p>1. Очень большие видео могут потребовать много памяти.</p>
+          <p>2. При открытии по <code class="inline">file://</code> некоторые браузеры могут ограничивать загрузку модулей. Надёжнее запускать через
+          простой локальный сервер.</p>
+          <p>3. FFmpeg WebAssembly подгружается из CDN. Если нужен полностью автономный офлайн-вариант, можно сохранить рядом файлы ядра FFmpeg и
+          заменить пути в коде.</p>
+        </div>
+
+        <div class="btns">
+          <button id="serverHintBtn" class="ghost" type="button">Показать как запустить локально</button>
+        </div>
+        <div id="serverHint" class="small" style="display:none; margin-top:12px;">
+          Самый простой вариант:
+          <br><br>
+          <code class="inline">python -m http.server 8000</code>
+          <br><br>
+          Потом откройте:
+          <br>
+          <code class="inline">http://localhost:8000</code>
+        </div>
+      </aside>
+    </div>
+
+    <section class="list" id="fileList"></section>
+
+    <div class="footer">
+      Совет: после очистки проверьте итоговые файлы независимым просмотрщиком метаданных. Для фото результат обычно «чистый».
+      Для видео степень очистки зависит от формата контейнера и особенностей исходного файла.
+    </div>
+  </div>
+
+  <script type="module">
+    const logEl = document.getElementById('log');
+    const dropzone = document.getElementById('dropzone');
+    const picker = document.getElementById('picker');
+    const fileListEl = document.getElementById('fileList');
+    const processBtn = document.getElementById('processBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const downloadAllBtn = document.getElementById('downloadAllBtn');
+    const serverHintBtn = document.getElementById('serverHintBtn');
+    const serverHint = document.getElementById('serverHint');
+
+    /** @type {{id:string,file:File,type:'image'|'video'|'other', cleanedBlob?:Blob, cleanedName?:string, cleanedUrl?:string}[]} */
+    let items = [];
+
+    let ffmpeg = null;
+    let ffmpegLoaded = false;
+
+    function log(msg) {
+      const time = new Date().toLocaleTimeString();
+      logEl.textContent += `[${time}] ${msg}\n`;
+      logEl.scrollTop = logEl.scrollHeight;
+    }
+
+    function human(bytes) {
+      if (bytes < 1024) return bytes + ' Б';
+      const units = ['КБ', 'МБ', 'ГБ'];
+      let i = -1;
+      do { bytes /= 1024; i++; } while (bytes >= 1024 && i < units.length - 1);
+      return bytes.toFixed(bytes < 10 && i > 0 ? 2 : 1) + ' ' + units[i];
+    }
+
+    function uid() {
+      return Math.random().toString(36).slice(2, 10);
+    }
+
+    function kindOf(file) {
+      if (file.type.startsWith('image/')) return 'image';
+      if (file.type.startsWith('video/')) return 'video';
+      return 'other';
+    }
+
+    function cleanedFileName(name, fallbackExt = '') {
+      const idx = name.lastIndexOf('.');
+      const base = idx > 0 ? name.slice(0, idx) : name;
+      const ext = idx > 0 ? name.slice(idx) : fallbackExt;
+      return `${base}__clean${ext}`;
+    }
+
+    function revokeOldUrl(item) {
+      if (item.cleanedUrl) {
+        URL.revokeObjectURL(item.cleanedUrl);
+        item.cleanedUrl = undefined;
+      }
+    }
+
+    function addFiles(fileList) {
+      const incoming = [...fileList];
+      for (const file of incoming) {
+        items.push({
+          id: uid(),
+          file,
+          type: kindOf(file)
+        });
+      }
+      render();
+      log(`Добавлено файлов: ${incoming.length}`);
+    }
+
+    function clearAll() {
+      for (const item of items) revokeOldUrl(item);
+      items = [];
+      render();
+      downloadAllBtn.disabled = true;
+      log('Список очищен.');
+    }
+
+    function escapeHtml(text) {
+      return text.replace(/[&<>"']/g, (m) => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      }[m]));
+    }
+
+    function render() {
+      if (!items.length) {
+        fileListEl.innerHTML = '';
+        return;
+      }
+
+      fileListEl.innerHTML = items.map(item => {
+        const file = item.file;
+        const preview = item.type === 'image'
+          ? `<img src="${URL.createObjectURL(file)}" alt="">`
+          : item.type === 'video'
+            ? `<video src="${URL.createObjectURL(file)}" controls muted playsinline></video>`
+            : `<div class="small">Предпросмотр недоступен</div>`;
+
+        const cleanedInfo = item.cleanedBlob
+          ? `<div><span class="status-ok">Готово:</span> ${human(item.cleanedBlob.size)} · <a href="${item.cleanedUrl}" download="${escapeHtml(item.cleanedName)}" style="color:#9ec5ff;">скачать</a></div>`
+          : `<div><span class="status-warn">Не обработан</span></div>`;
+
+        return `
+          <article class="item">
+            <div class="item-head">
+              <div class="item-title">${escapeHtml(file.name)}</div>
+              <div class="badge">${item.type === 'image' ? 'Фото' : item.type === 'video' ? 'Видео' : 'Файл'}</div>
+            </div>
+            <div class="item-body">
+              <div class="preview">${preview}</div>
+              <div class="meta">
+                <div><strong>Тип MIME:</strong> ${escapeHtml(file.type || 'неизвестно')}</div>
+                <div><strong>Размер:</strong> ${human(file.size)}</div>
+                <div>${cleanedInfo}</div>
+                <div class="small">
+                  ${item.type === 'image'
+                    ? 'Фото очищается пересборкой изображения через Canvas.'
+                    : item.type === 'video'
+                      ? 'Видео очищается через FFmpeg WebAssembly с удалением метаданных контейнера и потоков.'
+                      : 'Этот тип файла не поддерживается.'}
+                </div>
+              </div>
+            </div>
+          </article>
+        `;
+      }).join('');
+
+      downloadAllBtn.disabled = !items.some(x => x.cleanedBlob);
+    }
+
+    async function fileToImageBitmap(file) {
+      const bitmap = await createImageBitmap(file);
+      return bitmap;
+    }
+
+    function guessImageOutput(file) {
+      // Безопасный браузерный экспорт: jpeg/png/webp.
+      // AVIF/HEIC не гарантируются при canvas.toBlob.
+      if (file.type === 'image/png') return { mime: 'image/png', ext: '.png' };
+      if (file.type === 'image/webp') return { mime: 'image/webp', ext: '.webp' };
+      return { mime: 'image/jpeg', ext: '.jpg' };
+    }
+
+    async function cleanImage(item) {
+      const { file } = item;
+      const bmp = await fileToImageBitmap(file);
+      const canvas = document.createElement('canvas');
+      canvas.width = bmp.width;
+      canvas.height = bmp.height;
+      const ctx = canvas.getContext('2d', { alpha: true });
+      ctx.drawImage(bmp, 0, 0);
+      bmp.close();
+
+      const out = guessImageOutput(file);
+      const blob = await new Promise((resolve, reject) => {
+        canvas.toBlob((b) => b ? resolve(b) : reject(new Error('Не удалось экспортировать изображение')), out.mime, 0.95);
+      });
+
+      revokeOldUrl(item);
+      item.cleanedBlob = blob;
+      item.cleanedName = cleanedFileName(file.name, out.ext);
+      item.cleanedUrl = URL.createObjectURL(blob);
+      return item;
+    }
+
+    async function loadFFmpeg() {
+      if (ffmpegLoaded && ffmpeg) return ffmpeg;
+      log('Загрузка FFmpeg WebAssembly...');
+      const [{ FFmpeg }, { toBlobURL, fetchFile }] = await Promise.all([
+        import('https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.10/dist/esm/index.js'),
+        import('https://cdn.jsdelivr.net/npm/@ffmpeg/util@0.12.1/dist/esm/index.js')
+      ]);
+
+      ffmpeg = new FFmpeg();
+      ffmpeg.on('log', ({ message }) => {
+        if (message && /metadata|Stream|Input|Output|frame=|size=|muxing/i.test(message)) {
+          log('[ffmpeg] ' + message);
+        }
+      });
+
+      const base = 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/esm';
+      await ffmpeg.load({
+        coreURL: await toBlobURL(`${base}/ffmpeg-core.js`, 'text/javascript'),
+        wasmURL: await toBlobURL(`${base}/ffmpeg-core.wasm`, 'application/wasm'),
+      });
+
+      ffmpeg._fetchFile = fetchFile;
+      ffmpegLoaded = true;
+      log('FFmpeg загружен.');
+      return ffmpeg;
+    }
+
+    function extFromName(name, fallback) {
+      const i = name.lastIndexOf('.');
+      return i > -1 ? name.slice(i) : fallback;
+    }
+
+    async function cleanVideo(item) {
+      const ff = await loadFFmpeg();
+      const { file } = item;
+      const inName = `input_${item.id}${extFromName(file.name, '.mp4')}`;
+      const outName = `output_${item.id}${extFromName(file.name, '.mp4')}`;
+
+      await ff.writeFile(inName, await ff._fetchFile(file));
+
+      // Пытаемся удалить максимум метаданных без перекодирования.
+      // -map_metadata -1 удаляет глобальные метаданные контейнера
+      // -map_chapters -1 удаляет главы
+      // -metadata:s:* delete удаляет per-stream поля если контейнер/формат позволяет
+      // -movflags use_metadata_tags не добавляем, наоборот стараемся ничего не сохранять
+      const args = [
+        '-i', inName,
+        '-map', '0',
+        '-map_metadata', '-1',
+        '-map_chapters', '-1',
+        '-c', 'copy',
+        '-metadata', 'title=',
+        '-metadata', 'comment=',
+        '-metadata', 'description=',
+        '-metadata', 'encoder=',
+        '-metadata', 'artist=',
+        '-metadata', 'creation_time=',
+        '-metadata:s:v:0', 'title=',
+        '-metadata:s:v:0', 'handler_name=',
+        '-metadata:s:a:0', 'title=',
+        '-metadata:s:a:0', 'handler_name=',
+        '-fflags', '+bitexact',
+        outName
+      ];
+
+      try {
+        log(`Обработка видео: ${file.name}`);
+        await ff.exec(args);
+      } catch (e) {
+        // Фоллбэк: перекодирование в MP4 H.264/AAC, если copy не сработал
+        log('Режим copy не сработал, пробую перекодирование...');
+        const fallbackName = `output_${item.id}.mp4`;
+        await ff.exec([
+          '-i', inName,
+          '-map', '0:v:0?',
+          '-map', '0:a:0?',
+          '-map_metadata', '-1',
+          '-map_chapters', '-1',
+          '-metadata', 'title=',
+          '-metadata', 'comment=',
+          '-metadata', 'description=',
+          '-metadata', 'encoder=',
+          '-metadata', 'artist=',
+          '-metadata', 'creation_time=',
+          '-c:v', 'libx264',
+          '-preset', 'veryfast',
+          '-crf', '18',
+          '-c:a', 'aac',
+          '-b:a', '192k',
+          '-movflags', '+faststart',
+          fallbackName
+        ]);
+        const data = await ff.readFile(fallbackName);
+        const blob = new Blob([data.buffer], { type: 'video/mp4' });
+        revokeOldUrl(item);
+        item.cleanedBlob = blob;
+        item.cleanedName = cleanedFileName(file.name, '.mp4');
+        item.cleanedUrl = URL.createObjectURL(blob);
+        safeDelete(ff, inName, fallbackName, outName);
+        return item;
+      }
+
+      const data = await ff.readFile(outName);
+      const mime = file.type || 'video/mp4';
+      const blob = new Blob([data.buffer], { type: mime });
+      revokeOldUrl(item);
+      item.cleanedBlob = blob;
+      item.cleanedName = cleanedFileName(file.name, extFromName(file.name, '.mp4'));
+      item.cleanedUrl = URL.createObjectURL(blob);
+      safeDelete(ff, inName, outName);
+      return item;
+    }
+
+    function safeDelete(ff, ...names) {
+      for (const n of names) {
+        if (!n) continue;
+        try { ff.deleteFile(n); } catch {}
+      }
+    }
+
+    async function processAll() {
+      if (!items.length) {
+        alert('Сначала добавьте файлы.');
+        return;
+      }
+
+      processBtn.disabled = true;
+      downloadAllBtn.disabled = true;
+
+      try {
+        for (const item of items) {
+          if (item.type === 'image') {
+            log(`Очистка фото: ${item.file.name}`);
+            await cleanImage(item);
+            log(`Фото готово: ${item.cleanedName}`);
+          } else if (item.type === 'video') {
+            await cleanVideo(item);
+            log(`Видео готово: ${item.cleanedName}`);
+          } else {
+            log(`Пропуск неподдерживаемого файла: ${item.file.name}`);
+          }
+          render();
+        }
+        log('Все возможные файлы обработаны.');
+      } catch (err) {
+        console.error(err);
+        log(`Ошибка: ${err.message || err}`);
+        alert('Во время обработки произошла ошибка. Подробности в логе.');
+      } finally {
+        processBtn.disabled = false;
+        downloadAllBtn.disabled = !items.some(x => x.cleanedBlob);
+      }
+    }
+
+    async function downloadAll() {
+      const ready = items.filter(x => x.cleanedBlob && x.cleanedUrl);
+      for (const item of ready) {
+        const a = document.createElement('a');
+        a.href = item.cleanedUrl;
+        a.download = item.cleanedName;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        await new Promise(r => setTimeout(r, 180));
+      }
+    }
+
+    dropzone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropzone.classList.add('drag');
+    });
+
+    dropzone.addEventListener('dragleave', () => {
+      dropzone.classList.remove('drag');
+    });
+
+    dropzone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropzone.classList.remove('drag');
+      if (e.dataTransfer.files?.length) addFiles(e.dataTransfer.files);
+    });
+
+    picker.addEventListener('change', (e) => {
+      if (e.target.files?.length) addFiles(e.target.files);
+      picker.value = '';
+    });
+
+    processBtn.addEventListener('click', processAll);
+    clearBtn.addEventListener('click', clearAll);
+    downloadAllBtn.addEventListener('click', downloadAll);
+    serverHintBtn.addEventListener('click', () => {
+      serverHint.style.display = serverHint.style.display === 'none' ? 'block' : 'none';
+    });
+
+    render();
+  </script>
+</body>
+</html>
